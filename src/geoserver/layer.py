@@ -8,7 +8,8 @@ __author__ = "David Winslow"
 __copyright__ = "Copyright 2012-2015 Boundless, Copyright 2010-2012 OpenPlans"
 __license__ = "MIT"
 
-from geoserver.support import ResourceInfo, xml_property, write_bool, url
+from geoserver.support import (ResourceInfo, xml_property, write_bool, 
+                               url, atom_link)
 from geoserver.style import Style
 
 class _attribution(object):
@@ -90,9 +91,10 @@ class Layer(ResourceInfo):
     def resource(self):
         if self.dom is None: 
             self.fetch()
-        name = self.dom.find("resource/name").text
-        return self.catalog.get_resource(name)
-
+        
+        resource_url = atom_link(self.dom.find("resource"))
+        return self.catalog.get_resource_by_url(resource_url)
+        
     def _get_default_style(self):
         if 'default_style' in self.dirty:
             return self.dirty['default_style']

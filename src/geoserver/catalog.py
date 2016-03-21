@@ -12,12 +12,13 @@ from datetime import datetime, timedelta
 import logging
 import json
 from geoserver.layer import Layer
-from geoserver.resource import FeatureType, Coverage
+from geoserver.resource import FeatureType, Coverage, WmsLayer
 from geoserver.store import coveragestore_from_index, datastore_from_index, \
     wmsstore_from_index, UnsavedDataStore, \
     UnsavedCoverageStore, UnsavedWmsStore
 from geoserver.style import Style
-from geoserver.support import prepare_upload_bundle, url, _decode_list, _decode_dict, JDBCVirtualTable
+from geoserver.support import (prepare_upload_bundle, url, _decode_list, 
+                               _decode_dict, JDBCVirtualTable)
 from geoserver.layergroup import LayerGroup, UnsavedLayerGroup
 from geoserver.workspace import workspace_from_index, Workspace
 from os import unlink
@@ -703,8 +704,18 @@ class Catalog(object):
             resource = FeatureType
         elif xml.tag == 'coverage':
             resource = Coverage
+        elif xml.tag == 'wmsLayer':
+            store_name = xml.find("store/name").text
+            if ":" not in store_name:
+                return WmsLayer(self, self.get_default_workspace(), 
+                                store_name, name)
+            workspace_name, store_name = store_name.split(":")
+            workspace = self.get_workspace(workspace_name)
+            store = self.get_store(store_name, workspace)
+            return WmsLayer(self, workspace, store, name)
         else:
             raise Exception('drat')
+        
         return resource(self, None, None, name, href=url)
 
     def get_resources(self, store=None, workspace=None):
